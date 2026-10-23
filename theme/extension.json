@@ -1,0 +1,37 @@
+{
+  "id": "nekotune.theme-lumen",
+  "name": "夜光 · Lumen",
+  "version": "1.0.0",
+  "apiVersion": 2,
+  "type": "theme",
+  "contributes": {
+    "themes": [
+      {
+        "schemaVersion": 1,
+        "id": "default",
+        "title": {
+          "zh": "夜光 · Lumen",
+          "en": "Lumen"
+        },
+        "author": "NekoTune",
+        "variants": {
+          "light": {
+            "tokens": {
+              "accentPrimary": "#007F92",
+              "accentSecondary": "#385B9A"
+            }
+          },
+          "dark": {
+            "tokens": {
+              "accentPrimary": "#80D9EE",
+              "accentSecondary": "#A5B7F3"
+            }
+          }
+        },
+        "ui": {
+          "wallpaper": "Wallpaper.qml"
+        }
+      }
+    ]
+  }
+}

@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "apiVersion": 2,
   "type": "theme",
+  "description": "以青绿色与蓝紫色点缀呈现清爽夜光风格，提供浅色与深色配色及音乐壁纸。",
   "contributes": {
     "themes": [
       {
@@ -28,9 +29,7 @@
             }
           }
         },
-        "ui": {
-          "wallpaper": "Wallpaper.qml"
-        }
+        "wallpaper": "Wallpaper.qml"
       }
     ]
   }

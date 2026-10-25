@@ -1,4 +1,4 @@
-name: Package and test
+name: Build and release Lumen
 on: [push, pull_request, workflow_dispatch]
 permissions:
   contents: read
@@ -9,6 +9,9 @@ jobs:
       QT_QPA_PLATFORM: offscreen
       QT_QUICK_BACKEND: software
     steps:
+      - name: Preserve source line endings
+        shell: bash
+        run: git config --global core.autocrlf false
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       - run: sudo apt-get update && sudo apt-get install -y ninja-build libgl1-mesa-dev libxkbcommon-x11-0 libxcb-cursor0
       - uses: jurplel/install-qt-action@a9c63c7c123f3069cff414e7e482d95dfa9d8125
@@ -17,15 +20,23 @@ jobs:
           cache: true
       - run: cmake -S . -B build -G Ninja -DLUMEN_QML_TESTS=ON
       - run: cmake --build build --parallel 2
-      - run: ctest --test-dir build --output-on-failure
+      - run: ctest --test-dir build --output-on-failure --no-tests=error
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+      - name: Prepare versioned theme
+        run: |
+          uv run --no-project --python 3.12 -m unittest discover -s tests -p test_release.py
+          uv run --no-project --python 3.12 scripts/release.py prepare --manifest theme/extension.json
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: lumen-theme
-          path: build/packages/*
+          name: extension-any
+          path: build/release/*
           if-no-files-found: error
   windows:
     runs-on: windows-2022
     steps:
+      - name: Preserve source line endings
+        shell: bash
+        run: git config --global core.autocrlf false
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       - uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e
         with:
@@ -37,4 +48,38 @@ jobs:
           set -euo pipefail
           cmake -S . -B build -G Ninja -DLUMEN_QML_TESTS=ON
           cmake --build build --parallel 2
-          ctest --test-dir build --output-on-failure
+          ctest --test-dir build --output-on-failure --no-tests=error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [linux, windows]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: extension-*
+          path: dist
+          merge-multiple: true
+      - name: Verify complete release and write checksums
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          uv run --no-project --python 3.12 scripts/release.py finalize \
+            --manifest theme/extension.json --output dist --platforms any --tag "$TAG"
+          uv run --no-project --python 3.12 scripts/release.py verify \
+            --manifest theme/extension.json --output dist --platforms any --tag "$TAG"
+          (cd dist && sha256sum -c SHA256SUMS.txt)
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          RELEASE_NAME: 夜光 · Lumen
+        run: |
+          set -euo pipefail
+          gh release create "$TAG" dist/* --verify-tag --title "$RELEASE_NAME $TAG" \
+            --notes-file RELEASE_NOTES.md --generate-notes --draft

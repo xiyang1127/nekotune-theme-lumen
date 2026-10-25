@@ -13,14 +13,16 @@ ctest --test-dir build --output-on-failure
 ```
 
 安装 `build/packages/nekotune.theme-lumen.nktheme.zip`，或在宿主挂载 `theme/`。
-含 QML 的壁纸需要用户确认信任。宿主需要本次新增的歌词排版属性及跨平台透明能力。
+含 QML 的壁纸需要用户确认信任。宿主需要支持主题贡献的顶层 `wallpaper` 字段、歌词排版属性及跨平台透明能力。
+清单在 `contributes.themes[]` 中声明 `"wallpaper": "Wallpaper.qml"`，不再使用 `ui.wallpaper`。
 
-在「设置 → 动态音乐壁纸」中：
+启用步骤：
 
-1. 壁纸样式选择「跟随当前主题」，主题壁纸来源选择「夜光 · Lumen」。
-2. 开启「透明叠加」，关闭「封面背景」，手动开启壁纸。
+1. 在「设置 → 外观 → 壁纸」中选择「夜光 · Lumen」，按提示确认信任。
+2. 在「设置 → 动态音乐壁纸」中开启「透明叠加」，关闭「封面背景」，手动开启壁纸。
 3. 安装、信任并启用独立扩展 `nekotune.spectrum`，使用默认 FFmpeg 播放后端。
 
+也可以在「动态音乐壁纸」中将样式设为「跟随当前主题」，再将主题壁纸来源设为「夜光 · Lumen」。
 选择壁纸来源不会改变当前应用界面或主动启用壁纸。主题也不会改写这些设置。
 没有频谱扩展时，歌曲和歌词仍然展示；播放时频谱区域提示如何启用。
 Qt 兼容播放后端会显示不支持频谱，不回退到系统录音。
@@ -41,4 +43,4 @@ Qt 兼容播放后端会显示不支持频谱，不回退到系统录音。
 原生 Wayland 验收额外设置 `NEKOTUNE_TEST_NATIVE_WALLPAPER=1`、`QT_QPA_PLATFORM=wayland`。
 
 Windows 10/11 的透明嵌入、混合 DPI 和 Explorer 重启需要真机验收。离屏截图只验证 QML 显示及 alpha。
-CI 生成本地构建附件，不自动创建 Release。视觉检查记录见 `design-qa.md`。
+CI 在 Linux 和 Windows 执行测试；版本标签通过后生成带安装包与 SHA-256 校验文件的草稿 Release。视觉检查记录见 `design-qa.md`。
